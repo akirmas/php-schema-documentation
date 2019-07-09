@@ -42,8 +42,6 @@ array_walk_recursive($process, function($value, $key) use ($instanceDir, $vocabu
 
   $req = $instance['request'];
   foreach ($req['fields'] as $key => $_) {
-    if ($key === 'crm:id')
-      echo '';
     if (
       keyExists($req, ['overrides', $key])
       || array_key_exists($key, $response)
@@ -61,9 +59,6 @@ array_walk_recursive($process, function($value, $key) use ($instanceDir, $vocabu
 
   $res = $instance['response'];
   foreach ($res['fields'] as $key => $_) {
-    if ($key === 'crm:id')
-      echo '';
-
     if (array_key_exists($key, $request))
       continue;
     
