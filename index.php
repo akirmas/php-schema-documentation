@@ -3,8 +3,10 @@ require_once(__DIR__.'/utils/index.php');
 use function utils\fetchSchema;
 require_once(__DIR__.'/utils/assoc.php');
 use function assoc\{keyExists, merge, getValue};
-$schema = '$schema';
-$$schema = "http://json-schema.org/draft-07/schema#";
+$output = [
+  '$schema' => "http://json-schema.org/draft-07/schema#",
+  '$id' =>  $_SERVER['SCRIPT_URI']
+];
 
 $processDir = '../configs/processes';
 $instanceDir = '../configs/instances';
@@ -86,7 +88,8 @@ array_walk_recursive($process, function($value, $key) use ($instanceDir, $vocabu
     }
 });
 
-echo json_encode(compact('$schema', $keyRoot), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+$output += ['properties' => $$keyRoot];
+echo json_encode($output , JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
 
 function switching($value, $patterns) {
   $return = [];
