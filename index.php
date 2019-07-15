@@ -40,38 +40,50 @@ array_walk_recursive($process, function($value, $key) use ($instanceDir, $vocabu
     return;
   $instance = fetchSchema($instanceDir, $value);
 
-  $req = $instance['request'];
-  foreach ($req['fields'] as $key => $_) {
-    if (
-      keyExists($req, ['overrides', $key])
-      || array_key_exists($key, $response)
-    ) continue;
+  if (array_key_exists('request', $instance)) {
+    $req = $instance['request'];
+    $defs = !array_key_exists('defaults', $req) ? [] : $req['defaults'];
+    if (array_key_exists('fields', $req))
+      foreach ($req['fields'] as $key => $_) {
+        if (
+          keyExists($req, ['overrides', $key])
+          || array_key_exists($key, $response)
+        ) continue;
 
-    $enum = !keyExists($req, ['values', $key])
-    ? $defType
-    : ['enum' => array_keys($req['values'][$key])];
-    $request[$key] = merge(getValue($request, $key, []),
-      switching($key, $vocabulary['patternProperties']),
-      getValue($vocabulary, ['properties', $key], []),
-      $enum
-    );
-  }
+        $enum = !keyExists($req, ['values', $key])
+        ? $defType
+        : ['enum' => array_keys($req['values'][$key])];
+        $default = !keyExists($defs, $key)
+        ? []
+        : ['default' => $defs[$key]];
 
-  $res = $instance['response'];
-  foreach ($res['fields'] as $key => $_) {
-    if (array_key_exists($key, $request))
-      continue;
-    
-    $enum = !keyExists($res, ['values', $key])
-    ? $defType
-    : ['enum' => array_values($res['values'][$key])];
-    $response[$key] = merge(getValue($response, $key, []),
-      switching($key, $vocabulary['patternProperties']),
-      getValue($vocabulary, ['properties', $key], []),
-      $enum
-    );
+        $request[$key] = merge(getValue($request, $key, []),
+          switching($key, $vocabulary['patternProperties']),
+          getValue($vocabulary, ['properties', $key], []),
+          $enum,
+          $default
+        );
+      }
 
   }
+
+  if (array_key_exists('response', $instance)) {
+    $res = $instance['response'];
+    if (array_key_exists('fields', $res))
+      foreach ($res['fields'] as $key => $_) {
+        if (array_key_exists($key, $request))
+          continue;
+        
+        $enum = !keyExists($res, ['values', $key])
+        ? $defType
+        : ['enum' => array_values($res['values'][$key])];
+        $response[$key] = merge(getValue($response, $key, []),
+          switching($key, $vocabulary['patternProperties']),
+          getValue($vocabulary, ['properties', $key], []),
+          $enum
+        );
+      }
+    }
 });
 
 echo json_encode(compact('$schema', $keyRoot), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
